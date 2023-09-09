@@ -259,4 +259,6 @@ if __name__ == "__main__":
                     v.previous = u
                     discovered.update(v, v.distance)
 
+        x = 1
+
 
