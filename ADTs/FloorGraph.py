@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import heapq
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -23,6 +24,11 @@ class Graph:
 
         # Create a list of all the vertices
         self.vertices: list = self.get_vertices(paths)
+
+        # Populate the edges list for each vertex
+        for edge in self.edges:
+            u = edge.u
+            self.vertices[u].edges.append(edge)
 
     def bfs(self, source):
         """
@@ -83,22 +89,22 @@ class Graph:
         """
         source.distance = 0
         discovered = MinHeap()
-        discovered.append(source.distance, source)
-        while len(discovered) > 0:
+        discovered.push((source.distance, source))
+        while discovered.size() > 0:
             # serve from queue
-            u = discovered.serve(0)
+            u = discovered.pop()
             u.visited = True
             for edge in u.edges:
-                v = edge.paths  # Look at the neighboring vertex
+                v = edge.v  # Look at the neighboring vertex
                 if not v.discovered:
                     v.discovered = True
-                    v.distance = u.distance + 1 + edge.x
+                    v.distance = u.distance + 1 + edge.time
                     v.previous = u
-                    discovered.append(v.distance, v)
+                    discovered.push((v.distance, v))
                 elif not v.visited:
-                    if v.distance > u.distance + edge.x:
+                    if v.distance > u.distance + edge.time:
                         # update distance
-                        v.distance = u.distance + edge.x
+                        v.distance = u.distance + edge.time
                         v.previous = u
                         discovered.update(v, v.distance)
 
@@ -128,8 +134,8 @@ class Graph:
         vertices = [None] * (greatest_vertex + 1)
         for i in range(len(paths)):  # Worst case time complexity of O(E)
             u, v, x = paths[i]
-            vertices[u] = u
-            vertices[v] = v
+            vertices[u] = Vertex(u)
+            vertices[v] = Vertex(v)
 
         return vertices
 
@@ -146,14 +152,14 @@ class Graph:
 
         # Add edges
         for edge in self.edges:
-            G.add_edge(edge.u, edge.v, weight=edge.x)
+            G.add_edge(edge.u, edge.v, weight=edge.time)
 
         # Draw the graph
         pos = nx.spring_layout(G)  # You can change the layout algorithm as needed
         nx.draw(G, pos, with_labels=True, node_size=500, font_size=10, node_color='lightblue')
 
         # Draw edges with arrows
-        edge_labels = {(edge.u, edge.v): edge.x for edge in self.edges}  # Optional edge labels
+        edge_labels = {(edge.u, edge.v): edge.time for edge in self.edges}  # Optional edge labels
         nx.draw_networkx_edges(G, pos, edgelist=list(G.edges()), connectionstyle="arc3, rad=0.2", arrowsize=20)
 
         # Draw node labels
@@ -167,19 +173,11 @@ class Graph:
         plt.show()  #
 
 
-# Implement backtracking code below
-#
-#
-#
-
-
 @dataclass
 class Vertex:
     id: int
 
     def __post_init__(self):
-        self.added = False
-
         self.edges = []
         self.distance = 0
 
@@ -195,7 +193,31 @@ class Vertex:
 class Edge:
     u: Vertex
     v: Vertex
-    x: int
+    time: int
+
+
+class MinHeap:
+    def __init__(self):
+        self.heap = []
+
+    def push(self, item):
+        heapq.heappush(self.heap, item)
+
+    def pop(self):
+        if self.is_empty():
+            raise IndexError("Heap is empty")
+        return heapq.heappop(self.heap)
+
+    def peek(self):
+        if self.is_empty():
+            raise IndexError("Heap is empty")
+        return self.heap[0]
+
+    def is_empty(self):
+        return len(self.heap) == 0
+
+    def size(self):
+        return len(self.heap)
 
 
 if __name__ == "__main__":
@@ -207,5 +229,34 @@ if __name__ == "__main__":
     my_graph = Graph(paths, keys)
     print(my_graph.vertices)
     print(my_graph.edges)
+    print()
+    print("Printing all the edges for each vertex")
+    for vertex in my_graph.vertices:
+        print(vertex.edges)
     # my_graph.draw_graph()
+
+    print()
+    source = my_graph.vertices[2]
+    discovered = MinHeap()
+    discovered.push(source)
+    # print(discovered.heap)
+    while discovered.size() > 0:
+        # serve from queue
+        u = discovered.pop()
+        print(u)
+        u.visited = True
+        for edge in u.edges:
+            v = my_graph.vertices[edge.v]
+            if not v.discovered:
+                v.discovered = True
+                v.distance = u.distance + edge.time
+                v.previous = u
+                discovered.push(v)
+            elif not v.visited:
+                if v.distance > u.distance + edge.time:
+                    # update distance
+                    v.distance = u.distance + edge.time
+                    v.previous = u
+                    discovered.update(v, v.distance)
+
 
