@@ -89,18 +89,22 @@ class Graph:
         """
         source.distance = 0
         discovered = MinHeap()
-        discovered.push((source.distance, source))
+        discovered.push(source.id)
         while discovered.size() > 0:
-            # serve from queue
-            u = discovered.pop()
+
+            # From the heap/array, pop the vertex, and now it is visited so update the visited
+            # Once the vertex has been visited, it
+            u = my_graph.vertices[discovered.pop()]
             u.visited = True
+
+            # Now we will look at all the edges that this vertex (u) has in its edges list
             for edge in u.edges:
-                v = edge.v  # Look at the neighboring vertex
+                v = my_graph.vertices[edge.v]  # Look at the neighboring vertex
                 if not v.discovered:
                     v.discovered = True
-                    v.distance = u.distance + 1 + edge.time
+                    v.distance = u.distance + edge.time
                     v.previous = u
-                    discovered.push((v.distance, v))
+                    discovered.push(v.id)
                 elif not v.visited:
                     if v.distance > u.distance + edge.time:
                         # update distance
@@ -219,6 +223,23 @@ class MinHeap:
     def size(self):
         return len(self.heap)
 
+    def print_heap(self):
+        if self.is_empty():
+            print("Heap is empty")
+            return
+
+        def visualize(index, indent=""):
+            if index < len(self.heap):
+                print(indent + str(self.heap[index]))
+                left_child = 2 * index + 1
+                right_child = 2 * index + 2
+                if left_child < len(self.heap):
+                    visualize(left_child, indent + "  |__ ")
+                if right_child < len(self.heap):
+                    visualize(right_child, indent + "  |__ ")
+
+        visualize(0)
+
 
 if __name__ == "__main__":
     # The paths represented as a list of tuples
@@ -228,30 +249,34 @@ if __name__ == "__main__":
 
     my_graph = Graph(paths, keys)
     print(my_graph.vertices)
-    print(my_graph.edges)
+    # print(my_graph.edges)
     print()
     print("Printing all the edges for each vertex")
     for vertex in my_graph.vertices:
-        print(vertex.edges)
+        print(f"Vertex({vertex.id}): {vertex.edges}")
     # my_graph.draw_graph()
 
     print()
-    source = my_graph.vertices[2]
+    source = my_graph.vertices[0]
+    source.distance = 0
     discovered = MinHeap()
-    discovered.push(source)
-    # print(discovered.heap)
+    discovered.push(source.id)
+
     while discovered.size() > 0:
-        # serve from queue
-        u = discovered.pop()
-        print(u)
+
+        # From the heap/array, pop the vertex, and now it is visited so update the visited
+        # Once the vertex has been visited, it
+        u = my_graph.vertices[discovered.pop()]
         u.visited = True
+
+        # Now we will look at all the edges that this vertex (u) has in its edges list
         for edge in u.edges:
-            v = my_graph.vertices[edge.v]
+            v = my_graph.vertices[edge.v]  # Look at the neighboring vertex
             if not v.discovered:
                 v.discovered = True
                 v.distance = u.distance + edge.time
                 v.previous = u
-                discovered.push(v)
+                discovered.push(v.id)
             elif not v.visited:
                 if v.distance > u.distance + edge.time:
                     # update distance
@@ -259,6 +284,7 @@ if __name__ == "__main__":
                     v.previous = u
                     discovered.update(v, v.distance)
 
-        x = 1
+    for vertex in my_graph.vertices:
+        print(f"Vertex{vertex.id} is {vertex.distance}")
 
-
+    # Updated
