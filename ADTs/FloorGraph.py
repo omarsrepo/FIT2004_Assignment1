@@ -262,7 +262,7 @@ if __name__ == "__main__":
     # my_graph.draw_graph()
 
     print()
-    source = my_graph.vertices[1]
+    source = my_graph.vertices[6]
     source.distance = 0
 
     discovered = MinHeap()
@@ -282,13 +282,13 @@ if __name__ == "__main__":
                     if not vertex.visited:
                         if vertex.distance == u_distance:
                             u = vertex
-                            print(f"I found this vertex: {u}")
+                            # print(f"I found this vertex: {u}")
                             u.visited = True
                             break
 
         # Now we will look at all the edges that this vertex (u) has in its edges list
         for edge in u.edges:
-            print(f"distance of vertex{u.id} is {u.distance}")
+            # print(f"distance of vertex{u.id} is {u.distance}")
             v = my_graph.vertices[edge.v]  # Look at the neighboring vertex
             if not v.discovered:
                 v.discovered = True
@@ -302,8 +302,11 @@ if __name__ == "__main__":
                     v.previous = u
                     discovered.push(v.distance)
         i += 1
-        print(discovered.heap)
+        # print(discovered.heap)
 
     for vertex in my_graph.vertices:
         if vertex is not None:
             print(f"Vertex{vertex.id} is {vertex.distance}")
+
+    print()
+    print(3+10+11+6)
