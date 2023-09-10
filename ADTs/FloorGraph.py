@@ -255,10 +255,10 @@ if __name__ == "__main__":
     # print(my_graph.edges)
     #
     # print()
-    # print("Printing all the edges for each vertex")
-    # for vertex in my_graph.vertices:
-    #     if vertex is not None:
-    #         print(f"Vertex({vertex.id}): {vertex.edges}")
+    print("Printing all the edges for each vertex")
+    for vertex in my_graph.vertices:
+        if vertex is not None:
+            print(f"Vertex({vertex.id}): {vertex.edges}")
     # my_graph.draw_graph()
 
     print()

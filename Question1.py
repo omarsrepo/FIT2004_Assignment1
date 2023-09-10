@@ -1,74 +1,78 @@
-"""
-Name: Mohamed Omar Mohamed Muhseen
-Student_ID: 28951743
 
-Question1:Fast Food Chain
-"""
+from typing import List, Tuple
 
 
-def restaurantFinder(d: int, site_list: list[int]) -> tuple:
-    """
-    Function description: This function will take in a list of size N containing the annual revenue of sites
-    and will use the distance parameter to return a list of which sites from the site list would be best to
-    maximize the revenue as well as the predicted total revenue for the output list.
+def optimal_path_to_find_max_revenue(s: int, revs: List[int]) -> Tuple[ int, List[int]]:
+    size = len(revs)
 
-    :Input:
-        :param d: distance parameter
-        :param site_list: list of size N containing annual revenue
-    :Output, return tuple (total_revenue,selected_sites):
-    :Time-complexity:
-    :Aux space-complexity:
-    """
-    n = len(site_list)
-    selected_sites = []
-    total_revenue = 0
+    # Base case if no list of revenues is provided
+    if size == 0:
+        return 0, []
 
-    start = 0
-    while start < n:
-        max_revenue = -1
-        selected_site = -1
-        for i in range(start, min(start + d + 1, n)):
-            if site_list[i] > max_revenue:
-                max_revenue = site_list[i]
-                selected_site = i
-        if selected_site == -1:
-            break
-        selected_sites.append(selected_site + 1)  # Site numbers are 1-based
-        total_revenue += max_revenue
-        start = selected_site + d + 1
+    # Memoization
+    max_rev = [0] * size
+    tracking = [None] * size
+    
+    d = s + 1
+    
+    max_rev[0] = revs[0]
+    tracking[0] = None
 
-    return total_revenue, selected_sites
-
-
-def restaurantFinder2(d, site_list):
-    N = len(site_list)
-    max_revenue = [0] * (N + 1)
-    prev_site = [-1] * (N + 1)
-
-    for i in range(1, N + 1):
-        max_revenue[i] = site_list[i - 1]
-        prev_site[i] = -1
-
-        for j in range(1, i):
-            if i - j > d:
-                if max_revenue[i] < max_revenue[j] + site_list[i - 1]:
-                    max_revenue[i] = max_revenue[j] + site_list[i - 1]
-                    prev_site[i] = j
-            else:
-                break
-
-    max_total_revenue = max(max_revenue)
-    selected_sites = []
-    idx = max_revenue.index(max_total_revenue)
-
-    while idx != -1:
-        selected_sites.append(idx)
-        idx = prev_site[idx]
-
-    selected_sites.reverse()
-    return max_total_revenue, selected_sites
+    for i in range(1, size):
+        last_best_rev_i = i - d
+        prev_i = i - 1
+        
+        if last_best_rev_i < 0:
+            carry_forward = max_rev[prev_i] >= revs[i]
+            max_value = max_rev[prev_i] if carry_forward else revs[i]
+            pos = ((tracking[prev_i] if tracking[prev_i] is not None else prev_i) if carry_forward else None)
+            
+            max_rev[i] = max_value
+            tracking[i] = pos
+            continue
+        
+        by_policy_value = revs[i] + max_rev[last_best_rev_i]
+        prev_value = max_rev[prev_i]
+        carry_forward = by_policy_value >= prev_value
+        
+        max_rev[i] = by_policy_value if carry_forward else prev_value
+        tracking[i] = (tracking[last_best_rev_i] if last_best_rev_i < d and tracking[last_best_rev_i] is not None else last_best_rev_i) if carry_forward else prev_i
+        
+    max_value, pos = find_max(max_rev)
+    
+    track = []
+    __back_track(tracking, pos, track)
+    
+    return max_value, [i + 1 for i in track]
 
 
-print(restaurantFinder2(1,[50, 10, 12, 65, 40, 95, 100, 12, 20, 30]))
+def find_max(arr: List[int]):
+    max_value_i = 0
+    max_value = arr[max_value_i]
+
+    for i in range(len(arr)):
+        curr_val = arr[i]
+        if curr_val > max_value:
+            max_value = curr_val
+            max_value_i = i
+    return max_value, max_value_i
 
 
+def __back_track(arr: List[int], i: int, result: List[int]):
+    if arr[i] is None:
+        result.append(i)
+        return i
+    __back_track(arr, arr[i], result)
+    if arr[i] != i:
+        result.append(i)
+
+    return i
+
+
+if __name__ == '__main__':
+    rev = [50, 10, 12, 65, 40, 95, 100, 12, 20, 30]
+
+    d = 1
+    print(d, optimal_path_to_find_max_revenue(d, rev))
+
+        
