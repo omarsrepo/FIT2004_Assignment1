@@ -1,3 +1,4 @@
+
 from dataclasses import dataclass
 import heapq
 import networkx as nx
@@ -243,31 +244,46 @@ class MinHeap:
 
 if __name__ == "__main__":
     # The paths represented as a list of tuples
-    paths = [(0, 1, 4), (0, 3, 2), (0, 2, 3), (2, 3, 2), (3, 0, 3)]
+    paths = [(0, 1, 4), (1, 2, 2), (2, 3, 3), (3, 4, 1), (1, 5, 2),
+             (5, 6, 5), (6, 3, 2), (6, 4, 3), (1, 7, 4), (7, 8, 2),
+             (8, 7, 2), (7, 3, 2), (8, 0, 11), (4, 3, 1), (4, 8, 10)]
     # The keys represented as a list of tuples
     keys = [(0, 5), (3, 2), (1, 3)]
 
     my_graph = Graph(paths, keys)
-    print(my_graph.vertices)
+    # print(my_graph.vertices)
     # print(my_graph.edges)
-    print()
-    print("Printing all the edges for each vertex")
-    for vertex in my_graph.vertices:
-        print(f"Vertex({vertex.id}): {vertex.edges}")
+    #
+    # print()
+    # print("Printing all the edges for each vertex")
+    # for vertex in my_graph.vertices:
+    #     if vertex is not None:
+    #         print(f"Vertex({vertex.id}): {vertex.edges}")
     # my_graph.draw_graph()
 
     print()
-    source = my_graph.vertices[0]
+    source = my_graph.vertices[1]
     source.distance = 0
+
     discovered = MinHeap()
     discovered.push(source.id)
-
+    source.discovered = True
+    i = 0
     while discovered.size() > 0:
-
         # From the heap/array, pop the vertex, and now it is visited so update the visited
         # Once the vertex has been visited, it
-        u = my_graph.vertices[discovered.pop()]
-        u.visited = True
+        if i == 0:
+            u = my_graph.vertices[discovered.pop()]
+            u.visited = True
+        else:
+            u_distance = discovered.pop()
+            for vertex in my_graph.vertices:
+                if vertex is not None:
+                    if vertex.distance == u_distance:
+                        u = vertex
+                        print(f"I found this vertex: {u}")
+                        u.visited = True
+                        break
 
         # Now we will look at all the edges that this vertex (u) has in its edges list
         for edge in u.edges:
@@ -276,15 +292,16 @@ if __name__ == "__main__":
                 v.discovered = True
                 v.distance = u.distance + edge.time
                 v.previous = u
-                discovered.push(v.id)
+                discovered.push(v.distance)
             elif not v.visited:
                 if v.distance > u.distance + edge.time:
                     # update distance
                     v.distance = u.distance + edge.time
                     v.previous = u
-                    discovered.update(v, v.distance)
+                    discovered.push(v.distance)
+        i += 1
+        print(discovered.heap)
 
     for vertex in my_graph.vertices:
-        print(f"Vertex{vertex.id} is {vertex.distance}")
-
-    # Updated
+        if vertex is not None:
+            print(f"Vertex{vertex.id} is {vertex.distance}")
