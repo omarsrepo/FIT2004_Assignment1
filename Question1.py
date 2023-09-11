@@ -2,7 +2,7 @@
 from typing import List, Tuple
 
 
-def optimal_path_to_find_max_revenue(s: int, revs: List[int]) -> Tuple[ int, List[int]]:
+def restaurantFinder(s: int, revs: List[int]) -> Tuple[ int, List[int]]:
     size = len(revs)
 
     # Base case if no list of revenues is provided
@@ -73,6 +73,6 @@ if __name__ == '__main__':
     rev = [50, 10, 12, 65, 40, 95, 100, 12, 20, 30]
 
     d = 1
-    print(d, optimal_path_to_find_max_revenue(d, rev))
+    print(d, restaurantFinder(d, rev))
 
         
