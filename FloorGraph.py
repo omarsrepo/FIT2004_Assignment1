@@ -1,8 +1,5 @@
-
 from dataclasses import dataclass
 import heapq
-import networkx as nx
-import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -65,11 +62,15 @@ class FloorGraph:
 
         :Time complexity:
         ----------------------
-
+        Dijkstra:
+        Best case is O(K*|V|) when the graph is spare and has very few edges (1 edge per vertex)
+        Worst case is O(K*(|E|+|V|log|V|))
+        Where K is the no.of vertices/locations with keys
 
         :Aux space complexity:
         ----------------------
-
+        valid_exits: Best and worst case is O(|Exits|) where |Exits| is the no.of total exits
+        final_route: Worst case is O(|V|) where we would have to traverse every single vertex from start to end
 
         :return: Tuple (Shortest time, Path) to climb to the next floor.
         """
@@ -89,11 +90,11 @@ class FloorGraph:
         final_route = []
         for key in self.keys:  # keys = [(0,5),(3,2),(1,3)]
             self.reset_state()
-            memo = self.dijkstra(start)
+            distances_from_start = self.dijkstra(start)
 
             vertex_id, key_time = key
-            if memo[vertex_id] is not None:
-                time_to_key_room = memo[vertex_id] + key_time  # Time to get to key and obtain it
+            if distances_from_start[vertex_id] is not None:
+                time_to_key_room = distances_from_start[vertex_id] + key_time  # Time to get to key and obtain it
 
                 # Back track from key to start
                 route = []
@@ -119,27 +120,23 @@ class FloorGraph:
 
             self.reset_state()
             memo2 = self.dijkstra(vertex_id)  # Distances from key to all other rooms
-            # print(f"Distances from key {vertex_id} to all other rooms: {memo2}")
-
             for exit in exits:
                 if memo2[exit] is not None:
                     if time_to_key_room + memo2[exit] < total_time:
-                        route2 = []
                         total_time = time_to_key_room + memo2[exit]
-                        exit_route = Stack()
+
                         # Backtrack from exit to the key
+                        route2 = []
+                        exit_route = Stack()
                         vertex = self.vertices[exit]
-                        # print(f"Hey I am here right now {vertex} with a route so far of {route}")
                         while True:
                             if vertex.id == key[0]:
                                 break
                             exit_route.push(vertex.id)
                             vertex = vertex.previous
-
                         while exit_route.size() > 0:
                             route2.append(exit_route.pop())
 
-                        # print(f"From key at {myfloor.vertices[key[0]].id} to exit {exit}:", total_time, route + route2, "\n")
                         final_route = route + route2
                 else:
                     if time_to_key_room < total_time:
@@ -148,7 +145,7 @@ class FloorGraph:
                         exit_route = Stack()
                         # Backtrack from exit to the key
                         vertex = self.vertices[exit]
-                        # print(f"Hey I am here right now {vertex} with a route so far of {route}")
+
                         while True:
                             if vertex.id == key[0]:
                                 break
@@ -158,7 +155,6 @@ class FloorGraph:
                         while exit_route.size() > 0:
                             route2.append(exit_route.pop())
 
-                        # print(f"From key at {myfloor.vertices[key[0]].id} to exit {exit}:", total_time, route + route2, "\n")
                         final_route = route + route2
 
         self.reset_state()
@@ -228,9 +224,9 @@ class FloorGraph:
 
         while discovered.size() > 0:
             """ ---------------------------------Section 1-----------------------------------"""
-            # i is a counter which decided what we push into the heap. On the first iteration, we only push the start vertex id
+            # i is a counter which decides what we push into the heap. On the first iteration, we only push the start vertex id
             # From the second iteration onwards, we push the distances of discovered vertices instead. When we pop from the heap
-            # we will always be choosing to visit the closest neighboring vertex, thus we choose a greedy approach
+            # we will always be choosing to visit the closest neighboring vertex
             # This section has a time complexity of |V|*log|V|
             if i == 0:
                 current_vertex = self.vertices[discovered.pop()]
@@ -456,57 +452,3 @@ class Stack:
 
     def size(self):
         return len(self.items)
-
-
-if __name__ == "__main__":
-    # The paths and keys represented as a list of tuples
-    paths = [(0, 1, 4), (1, 2, 2), (2, 3, 3), (3, 4, 1), (1, 5, 2), (5, 6, 5), (6, 3, 2), (6, 4, 3), (1, 7, 4),
-             (7, 8, 2), (8, 7, 2), (7, 3, 2), (8, 0, 11), (4, 3, 1), (4, 8, 10)]
-    keys = [(5, 10), (6, 1), (7, 5), (0, 3), (8, 4)]
-    graph = FloorGraph(paths, keys)
-
-    # print(graph.vertices)
-    # for vertex in graph.vertices:
-    #     if vertex is not None:
-    #         print(f"{vertex}: {vertex.edges}")
-    distance_from_start = graph.dijkstra(1)
-    print(f"distances_from_{1}: {distance_from_start}\n")
-
-    key_heap = MinHeap()
-    for key in keys:
-        key_heap.push(key[0])
-    # print(f"keys are at {key_heap.heap}\n")
-    # for key in key_heap.heap:
-    #     print(f"key at {key} takes {graph.vertices[key].key_time} mins")
-
-    total = float('inf')
-    key_to_go_for = None
-    while key_heap.size() > 0:
-        vertex_id = key_heap.pop()
-        if distance_from_start[vertex_id] is not None:
-            if total > distance_from_start[vertex_id] + graph.vertices[vertex_id].key_time:
-                total = distance_from_start[vertex_id] + graph.vertices[vertex_id].key_time
-                key_to_go_for = vertex_id
-
-    print(total, key_to_go_for)
-    """
-    Climb function logic:
-    ---------------------
-    climb(start: int, exits: list)
-    
-    start  = 1 --> Vertex(1)
-    distances_from_start = self.dijkstra(start) 
-    
-    distances_from_start = [17, None, 2, 5, 6, 2, 7, 4, 6]
-    total_time = float('inf')
-    final_route = []
-    
-    ------------------------------------ITERATE THROUGH EVERY KEY------------------------------------
-            REMEMBER THAT --> distances_from_start = [17, None, 2, 5, 6, 2, 7, 4, 6]
-    
-    for key in keys:  # keys = [(5, 10), (6, 1), (7, 5), (0, 3), (8, 4)]
-        vertex, time = key
-        if distances_from_start[vertex] is not None:
-            time = distances_from_start[vertex] + self.vertices.key_time  # Time to get to key and obtain it
-            
-    """
