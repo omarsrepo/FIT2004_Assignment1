@@ -240,15 +240,23 @@ class FloorGraph:
         G = nx.Graph()
         # Add nodes
         for vertex in self.vertices:
-            G.add_node(vertex)
+            G.add_node(vertex.id)
+            for edge in vertex.edges:
+                G.add_edge(edge.u, edge.v, weight=edge.time)
         # Add edges
-        for edge in self.edges:
-            G.add_edge(edge.u, edge.v, weight=edge.time)
+        # for edge in self.edges:
+        #     G.add_edge(edge.u, edge.v, weight=edge.time)
         # Draw the graph
         pos = nx.spring_layout(G)  # You can change the layout algorithm as needed
         nx.draw(G, pos, with_labels=True, node_size=500, font_size=10, node_color='lightblue')
         # Draw edges with arrows
-        edge_labels = {(edge.u, edge.v): edge.time for edge in self.edges}  # Optional edge labels
+        vertex_edges = []
+        for vertex in self.vertices:
+            for edge in vertex.edges:
+                if edge not in vertex_edges:
+                    vertex_edges.append(edge)
+                    
+        edge_labels = {(edge.u, edge.v): edge.time for edge in vertex_edges}  # Optional edge labels
         nx.draw_networkx_edges(G, pos, edgelist=list(G.edges()), connectionstyle="arc3, rad=0.2", arrowsize=20)
         # Draw node labels
         labels = {node: node for node in G.nodes()}
@@ -351,8 +359,8 @@ class Stack:
 
 if __name__ == "__main__":
     # The paths and keys represented as a list of tuples
-    paths = [(1, 2, 10), (1, 3, 5), (2, 3, 2), (2, 4, 1), (3, 2, 3), (3, 4, 9), (3, 5, 2), (4, 5, 4), (5, 4, 6)]
-    keys = [(3, 2), (1, 3)]
+    paths = [(0, 1, 4), (0, 3, 2), (0, 2, 3), (2, 3, 2), (3, 0, 3)]
+    keys = [(0, 5), (3, 2), (1, 3)]
     graph = FloorGraph(paths, keys)
     start = 3
     exits = [3]
@@ -362,5 +370,6 @@ if __name__ == "__main__":
         if vertex is not None:
             print(f"{vertex}: {vertex.edges}")
 
-    print(graph.climb(start, exits))
+    graph.draw_graph()
+
 
