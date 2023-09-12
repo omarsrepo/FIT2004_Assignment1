@@ -369,7 +369,3 @@ if __name__ == "__main__":
     for vertex in graph.vertices:
         if vertex is not None:
             print(f"{vertex}: {vertex.edges}")
-
-    graph.draw_graph()
-
-
