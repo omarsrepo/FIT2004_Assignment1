@@ -225,10 +225,11 @@ class FloorGraph:
                 greatest_vertex = v
         # Now we create a unique list of vertices in ascending order
         vertices = [None] * (greatest_vertex + 1)
-        for i in range(len(paths)):  # Worst case time complexity of O(E)
-            u, v, x = paths[i]
-            vertices[u] = Vertex(u)
-            vertices[v] = Vertex(v)
+        for i in range(len(vertices)):  # Worst case time complexity of O(E)
+            # u, v, x = paths[i]
+            # vertices[u] = Vertex(u)
+            # vertices[v] = Vertex(v)
+            vertices[i] = Vertex(i)
         return vertices
 
     # Tester function
@@ -350,12 +351,16 @@ class Stack:
 
 if __name__ == "__main__":
     # The paths and keys represented as a list of tuples
-    paths = [(0, 1, 4), (1, 2, 2), (2, 3, 3), (3, 4, 1), (1, 5, 2), (5, 6, 5), (6, 3, 2), (6, 4, 3), (1, 7, 4),
-             (7, 8, 2), (8, 7, 2), (7, 3, 2), (8, 0, 11), (4, 3, 1), (4, 8, 10)]
-    keys = [(0, 5), (3, 2), (1, 3)]
+    paths = [(1, 2, 10), (1, 3, 5), (2, 3, 2), (2, 4, 1), (3, 2, 3), (3, 4, 9), (3, 5, 2), (4, 5, 4), (5, 4, 6)]
+    keys = [(3, 2), (1, 3)]
     graph = FloorGraph(paths, keys)
     start = 3
     exits = [3]
 
+    print(graph.vertices)
     for vertex in graph.vertices:
-        print(f"{vertex}: {vertex.edges}")
+        if vertex is not None:
+            print(f"{vertex}: {vertex.edges}")
+
+    print(graph.climb(start, exits))
+
