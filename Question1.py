@@ -42,42 +42,58 @@ def restaurantFinder(d: int, revenues: List[int]) -> Tuple[int, List[int]]:
     max_rev = [0] * len(revenues)
     tracking = [None] * len(revenues)
 
-    s = d + 1
+    two = d + 1  # Rename this back to s later
 
     max_rev[0] = revenues[0]
     tracking[0] = None
 
+    print(revenues)
+    print(max_rev)
+    print(tracking)
+    print()
+
     for i in range(1, len(revenues)):
-        last_best_rev_i = i - s
-        prev_i = i - 1
+        last_best_rev_i = i - two
+        prev_site_index = i - 1
 
         if last_best_rev_i < 0:
-            if max_rev[prev_i] >= revenues[i]:
-                max_value = max_rev[prev_i]
-                if tracking[prev_i] is not None:
-                    pos = tracking[prev_i]
+            if max_rev[prev_site_index] >= revenues[i]:
+                max_value = max_rev[prev_site_index]
+                if tracking[prev_site_index] is not None:
+                    pos = tracking[prev_site_index]
                 else:
-                    pos = prev_i
+                    pos = prev_site_index
             else:
                 max_value = revenues[i]
                 pos = None
 
             max_rev[i] = max_value
             tracking[i] = pos
+
+            print(revenues)
+            print(max_rev)
+            print(tracking)
+            print()
             continue
 
         by_policy_value = revenues[i] + max_rev[last_best_rev_i]
-        prev_value = max_rev[prev_i]
+        prev_value = max_rev[prev_site_index]
 
         if by_policy_value >= prev_value:
             max_rev[i] = by_policy_value
-            if last_best_rev_i < s and tracking[last_best_rev_i] is not None:
+            if last_best_rev_i < two and tracking[last_best_rev_i] is not None:
                 tracking[i] = tracking[last_best_rev_i]
             else:
                 tracking[i] = last_best_rev_i
         else:
+            # We found a new max revenue, and we will add to tracking the site that lead to this new max
             max_rev[i] = prev_value
-            tracking[i] = prev_i
+            tracking[i] = prev_site_index
+
+        print(revenues)
+        print(max_rev)
+        print(tracking)
+        print()
 
     max_value, pos = find_max(max_rev)
 
@@ -112,13 +128,12 @@ def find_max(arr: List[int]):
     return max_value, max_value_i
 
 
-def backtrack(arr: List[int], i: int, result: List[int]):
+def backtrack(tracking: List[int], i: int, result: List[int]):
     """
 
     :Input:
 
     :Output,return or post condition:
-
 
     :Time complexity:
     ----------------------
@@ -126,11 +141,11 @@ def backtrack(arr: List[int], i: int, result: List[int]):
     :Aux space complexity:
     ----------------------
     """
-    if arr[i] is None:
+    if tracking[i] is None:
         result.append(i)
         return i
-    backtrack(arr, arr[i], result)
-    if arr[i] != i:
+    backtrack(tracking, tracking[i], result)
+    if tracking[i] != i:
         result.append(i)
 
     return i
@@ -138,6 +153,7 @@ def backtrack(arr: List[int], i: int, result: List[int]):
 
 if __name__ == '__main__':
     rev = [50, 10, 12, 65, 40, 95, 100, 12, 20, 30]
-
-    d = 7
+    d = 1
     print(restaurantFinder(d, rev))
+
+
