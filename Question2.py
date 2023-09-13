@@ -46,12 +46,25 @@ class FloorGraph:
         for key in self.keys:
             key_vertex, time = key
             self.vertices[key_vertex].key_time = time
+            self.vertices[key_vertex].contains_key = True
 
     def climb(self, start: int, exits: list) -> tuple | None:
         """
         This function returns the shortest route from start to one of the exits as a tuple (Shortest time, Path)
         to climb to the next floor. It computes the most optimal route needed to collect a key and then head to
         an exit.
+
+        Approach description: The approach used here is to first calculate the distances to all other vertexes from
+        our start point. We then iterate through all the vertexes with keys and compute the time it takes to get to
+        the key vertex and also obtain the key.
+        From there, we run dijkstras again to compute the distances to all the exits from the key vertex and calculate
+        the least time it takes from that key to one of the exits.
+        We then compare the least times of all keys-exits to find the best combination of which key to go for and
+        which exit to head to. We keep track of the routes taken as well from start to key to exit and finalise
+        the best route based on the least time we are able to find.
+
+        The complexity suffers a bit in this method BECAUSE dijkstras has to be run for EACH AND EVERY key and then
+        for each and every key we also have to iterate through the list of exits.
 
         :Input:
         paths: Integer of the vertex id indicating which vertex/location on the floor to start at
@@ -89,7 +102,6 @@ class FloorGraph:
         total_time = float('inf')
         final_route = []
         for key in self.keys:  # keys = [(0,5),(3,2),(1,3)]
-            self.reset_state()
             distances_from_start = self.dijkstra(start)
 
             vertex_id, key_time = key
@@ -118,7 +130,6 @@ class FloorGraph:
                     route.insert(0, vertex.previous.id)
                     vertex = vertex.previous
 
-            self.reset_state()
             memo2 = self.dijkstra(vertex_id)  # Distances from key to all other rooms
             for exit in exits:
                 if memo2[exit] is not None:
@@ -157,7 +168,6 @@ class FloorGraph:
 
                         final_route = route + route2
 
-        self.reset_state()
         return total_time, final_route
 
     def reset_state(self):
@@ -208,18 +218,16 @@ class FloorGraph:
 
         :return: List of distances from start to every other vertex
         """
+        self.reset_state()
         # Creating a list of distances from start vertex to all other vertexes to act as a look-up table.
-        current_vertex = None
         distances_from_start = [None] * len(self.vertices)
 
-        start_location = self.vertices[source]
-        start_location.distance = 0
+        current_vertex = self.vertices[source]
 
         # Creating a priority queue to decide which discovered vertex to visit next
         discovered = MinHeap()
-
-        discovered.push(start_location.id)
-        start_location.discovered = True
+        discovered.push(current_vertex.id)
+        current_vertex.discovered = True
         i = 0
 
         while discovered.size() > 0:
@@ -229,17 +237,16 @@ class FloorGraph:
             # we will always be choosing to visit the closest neighboring vertex
             # This section has a time complexity of |V|*log|V|
             if i == 0:
-                current_vertex = self.vertices[discovered.pop()]
+                discovered.pop()
                 current_vertex.visited = True
             else:
                 u_distance = discovered.pop()
                 for vertex in self.vertices:
-                    if vertex is not None:
-                        if not vertex.visited:
-                            if vertex.distance == u_distance:
-                                current_vertex = vertex
-                                current_vertex.visited = True
-                                break
+                    if vertex is not None and not vertex.visited:
+                        if vertex.distance == u_distance:
+                            current_vertex = vertex
+                            current_vertex.visited = True
+                            break
 
             """ Things to note """
             # u = current vertex
@@ -323,6 +330,7 @@ class Vertex:
         self.edges = []  # This is the adjacency list as we can see every edge for this vertex
         self.distance = 0
         self.key_time = None
+        self.contains_key = False
 
         # for backtracking
         self.previous = None  # Previous vertex that it came from
@@ -372,6 +380,7 @@ class MinHeap:
 
     :return: None
     """
+
     def __init__(self):  # O(1)
         self.heap = []
 
@@ -429,6 +438,7 @@ class Stack:
 
     :return: None
     """
+
     def __init__(self):
         self.items = []
 
@@ -452,3 +462,140 @@ class Stack:
 
     def size(self):
         return len(self.items)
+
+
+if __name__ == "__main__":
+    # The paths and keys represented as a list of tuples
+    paths = [(0, 1, 4), (1, 2, 2), (2, 3, 3), (3, 4, 1), (1, 5, 2), (5, 6, 5), (6, 3, 2), (6, 4, 3), (1, 7, 4),
+             (7, 8, 2), (8, 7, 2), (7, 3, 2), (8, 0, 11), (4, 3, 1), (4, 8, 10)]
+    keys = [(5, 10), (6, 1), (7, 5), (0, 3), (8, 4)]
+    graph = FloorGraph(paths, keys)
+
+    # Modified Dijkstra (change GRAPH.VERTICES to SELF.VERTICES)
+    distances_from_start = [None] * len(graph.vertices)
+    exits = [2, 4, 7]
+    source = 1  # Source input
+    current_vertex = graph.vertices[source]
+
+    discovered = MinHeap()
+    discovered.push(current_vertex.id)
+    current_vertex.discovered = True
+
+    initial_route = [current_vertex.id]
+
+    best_time = float('inf')
+    temp = float('inf')
+    time_with_key = float('inf')
+    time_without_key = 0
+
+    i = 0
+
+    while discovered.size() > 0:
+        if i == 0:
+            discovered.pop()
+            current_vertex.visited = True
+        else:
+            u_distance = discovered.pop()
+            for vertex in graph.vertices:
+                if vertex is not None and not vertex.visited:
+                    if vertex.distance == u_distance:
+                        current_vertex = vertex
+                        current_vertex.visited = True
+                        break
+
+        for edge in current_vertex.edges:  # (1,5,2), (1,7,4), (1,2,2)
+            v = graph.vertices[edge.v]  # Look at the neighboring vertex
+            if not v.discovered:
+                v.discovered = True
+                v.distance = current_vertex.distance + edge.time
+                v.previous = current_vertex
+                discovered.push(v.distance)  # adding the newly discovered neighbouring vertex into the heap based on its distance
+                distances_from_start[v.id] = v.distance  # Updating the distance to this neighbouring vertex from the start vertex
+
+                if v.contains_key and time_with_key > v.distance + v.key_time:
+                    time_with_key = v.distance + v.key_time
+                    key_room = v.id
+                if v.id in exits:
+                    while True:
+                        for edge in graph.vertices[key_room].edges:
+                            if edge.v == v.id:
+                                time_with_key += edge.time
+                                break
+                            else:
+                                key_room = graph.vertices[edge.v].id
+                        best_time = time_with_key
+                        break
+
+            elif not v.visited:
+                if v.distance > current_vertex.distance + edge.time:
+                    # update distance
+                    v.distance = current_vertex.distance + edge.time
+                    v.previous = current_vertex
+                    discovered.push(v.distance)
+                    distances_from_start[v.id] = v.distance
+            #
+            # v = graph.vertices[edge.v]
+            # route = [current_vertex.id]
+            # if edge.v in exits:
+            #     if graph.vertices[edge.v].key_time + edge.time < temp:
+            #         best_time = graph.vertices[edge.v].key_time + edge.time
+            #         temp = best_time  # Store the best time found so far
+            #     else:
+            #         temp = best_time
+            # elif graph.vertices[edge.v].contains_key:
+            #     time_with_key += edge.time + graph.vertices[edge.v].key_time
+            #     time_without_key += edge.time
+            #     best_time = time_with_key
+            # else:
+            #     graph.vertices[edge.v].distance = 0
+
+
+
+    # print(graph.vertices)
+    # for vertex in graph.vertices:
+    #     if vertex is not None:
+    #         print(f"{vertex}: {vertex.edges}")
+
+    # distance_from_start = graph.dijkstra(1)
+    # print(f"distances_from_{1}: {distance_from_start}\n")
+
+    # key_heap = MinHeap()
+    # for key in keys:
+    #     key_heap.push(key[0])
+
+    # print(f"keys are at {key_heap.heap}\n")
+    # for key in key_heap.heap:
+    #     print(f"key at {key} takes {graph.vertices[key].key_time} mins")
+
+    # total = float('inf')
+    # key_to_go_for = None
+    # while key_heap.size() > 0:
+    #     vertex_id = key_heap.pop()
+    #     if distance_from_start[vertex_id] is not None:
+    #         if total > distance_from_start[vertex_id] + graph.vertices[vertex_id].key_time:
+    #             total = distance_from_start[vertex_id] + graph.vertices[vertex_id].key_time
+    #             key_to_go_for = vertex_id
+    #
+    # print(total, key_to_go_for)
+
+    """
+    Climb function logic:
+    ---------------------
+    climb(start: int, exits: list)
+    
+    start  = 1 --> Vertex(1)
+    distances_from_start = self.dijkstra(start) 
+    
+    distances_from_start = [17, None, 2, 5, 6, 2, 7, 4, 6]
+    total_time = float('inf')
+    final_route = []
+    
+    ------------------------------------ITERATE THROUGH EVERY KEY------------------------------------
+            REMEMBER THAT --> distances_from_start = [17, None, 2, 5, 6, 2, 7, 4, 6]
+    
+    for key in keys:  # keys = [(5, 10), (6, 1), (7, 5), (0, 3), (8, 4)]
+        vertex, time = key
+        if distances_from_start[vertex] is not None:
+            time = distances_from_start[vertex] + self.vertices.key_time  # Time to get to key and obtain it
+            
+    """

@@ -8,7 +8,7 @@
 
 import unittest
 from Question1 import restaurantFinder
-from FloorGraph import FloorGraph
+from Question2 import FloorGraph
 
 # Question 1: Fast Food Chain
 
